@@ -34,8 +34,8 @@ apt-get update -y &>/dev/null
 echo "$(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
-echo "Installing packages: dtrx, sed, supervisor, wget if not installed yet."
-apt-get install dtrx sed supervisor wget -y &>/dev/null
+echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
+apt-get install dtrx sed sudo supervisor wget -y &>/dev/null
 
 #Detect architecture
 if [ -n "$(uname -m | grep 64)" ]; then
