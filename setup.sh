@@ -63,7 +63,6 @@ echo -n "Extracting the relaysrv daemon..."
 dtrx relaysrv-linux*
 echo "	$(tput setaf 2)DONE$(tput sgr0)"
 
-
 echo ""
 echo -n "Moving the relaysrv daemon to /usr/local/bin..."
 cd relaysrv-linux*
