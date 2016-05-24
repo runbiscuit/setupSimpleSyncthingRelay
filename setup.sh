@@ -35,6 +35,8 @@ elif [[ -e "$whichyum" ]]; then
 	yum install sed sudo wget python-setuptools -y &>/dev/null
 	easy_install supervisor &>/dev/null
 	mkdir -p /etc/supervisor/conf.d
+	mkdir -p /var/run/supervisord
+	chmod 777 /var/run/supervisord
 	echo_supervisord_conf > /etc/supervisor/supervisord.conf
 	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord" -O "/etc/rc.d/init.d/supervisord"
 	chmod 755 /etc/rc.d/init.d/supervisord
