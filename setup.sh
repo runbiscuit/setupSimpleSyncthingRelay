@@ -143,7 +143,7 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 echo ""
 echo -n "Adding a user for relaysrv, called relaysrv."
 adduser relaysrv --gecos '' --disabled-password &> /dev/null
-mkdir /etc/relaysrv /home/relaysrv
+mkdir /etc/relaysrv
 touch /home/relaysrv/syncthingRelay.log
 chown -R relaysrv /etc/relaysrv /home/relaysrv
 echo "...$(tput setaf 2)DONE$(tput sgr0)"
