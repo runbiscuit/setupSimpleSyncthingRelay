@@ -12,6 +12,38 @@ killall relaysrv > /dev/null &> /dev/null
 rm -rf relaysrv* /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv > /dev/null &> /dev/null
 deluser relaysrv > /dev/null &> /dev/null
 
+#Detecting apt-get/yum
+whichaptget=`which apt-get`
+whichyum=`which yum`
+if [[ -e "$whichaptget" ]]; then
+	OStype="apt-get"
+	echo ""
+	echo -n "Updating apt repositories..."
+	apt-get update -y &>/dev/null
+	echo "$(tput setaf 2)DONE$(tput sgr0)"
+	echo ""
+	echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
+	apt-get install sed sudo supervisor wget -y &>/dev/null
+elif [[ -e "$whichyum" ]]; then
+	OStype="yum"
+	echo ""
+	echo -n "Updating apt repositories..."
+	yum update -y &>/dev/null
+	echo "$(tput setaf 2)DONE$(tput sgr0)"
+	echo ""
+	echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
+	yum install sed sudo wget python-setuptools -y &>/dev/null
+	easy_install supervisor &>/dev/null
+	mkdir -p /etc/supervisor/conf.d
+	echo_supervisord_conf > /etc/supervisor/supervisord.conf
+	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord" -O "/etc/rc.d/init.d/supervisord"
+	chmod 755 /etc/rc.d/init.d/supervisord
+else
+	echo "unsupported or unknown architecture"
+	echo ""
+	exit;
+fi
+
 echo ""
 read -p "Please enter a relay name: " relayName
 
@@ -27,15 +59,6 @@ fi
 echo ""
 echo "Thus, on the Syncthing Relay page at relays.syncthing.net, it will show as:"
 echo "$relayName$delimiter$(wget ipinfo.io/city -qO -), $(wget ipinfo.io/country -qO -)"
-
-echo ""
-echo -n "Updating apt repositories..."
-apt-get update -y &>/dev/null
-echo "$(tput setaf 2)DONE$(tput sgr0)"
-
-echo ""
-echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
-apt-get install dtrx sed sudo supervisor wget -y &>/dev/null
 
 #Detect architecture
 if [ -n "$(uname -m | grep 64)" ]; then
@@ -76,11 +99,10 @@ rm -rf relaysrv-linux*
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
-echo -n "Adding a user for relaysrv, called relaysrv."
+echo "Adding a user for relaysrv, called relaysrv."
 adduser relaysrv --gecos '' --disabled-password
 mkdir /etc/relaysrv
 chown relaysrv /etc/relaysrv
-echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Copying Syncthing Relay supervisord configuration to the respective folder..."
@@ -92,7 +114,11 @@ sed -i s/RELAYNAME/"$relayName$delimiter$(wget ipinfo.io/city -qO -), $(wget ipi
 
 echo ""
 echo "Restarting supervisord..."
-sudo service supervisor restart
+if [[ -e "/etc/rc.d/init.d/supervisord" ]]; then
+	service supervisord restart
+else
+	service supervisor restart
+fi
 
 echo ""
 echo "And you should be up and running! (http://relays.syncthing.net)"
