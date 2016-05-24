@@ -65,7 +65,9 @@ Yes! Contributions are always welcome - if you have any code to contribute, simp
 
 ### Copyright
 
-Copyright (C) 2016 [Edwin A.](https://theroyalstudent.com) <edwin@theroyalstudent.com>
+Copyright (C) 2016 [Edwin A.](https://theroyalstudent.com) <edwin@theroyalstudent.com>.
+
+Credits to @sayem314 for CentOS/yum compatibility and other hotfixes.
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
 
