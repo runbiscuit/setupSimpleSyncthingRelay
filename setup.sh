@@ -5,8 +5,8 @@ echo "=================================================================="
 echo "Simple Syncthing Relay Setup Script by @theroyalstudent (Edwin A.)"
 echo "============ [ GitHub Source: https://git.io/vr2xt ] ============="
 echo "=================================================================="
-
 echo ""
+
 echo "Deleting old data and making sure no Syncthing Relay is running..."
 
 killall relaysrv > /dev/null &> /dev/null
@@ -93,14 +93,55 @@ fi
 
 # start setup process (fully automated and does not need human intervention anymore)
 
-echo ""
-echo -n "Updating apt repositories..."
-apt-get update -y &>/dev/null
-echo "$(tput setaf 2)DONE$(tput sgr0)"
+# detecting apt-get/yum
+whichaptget=`which apt-get`
+whichyum=`which yum`
 
-echo ""
-echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
-apt-get install dtrx sed sudo supervisor wget -y &>/dev/null
+if [[ -e "$whichaptget" ]]; then
+	OStype="apt-get"
+
+	echo ""
+	echo -n "Updating apt repositories..."
+
+	apt-get update -y &>/dev/null
+
+	echo "$(tput setaf 2)DONE$(tput sgr0)"
+	echo ""
+	echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
+
+	apt-get install sed sudo supervisor wget -y &>/dev/null
+
+	echo "	$(tput setaf 2)DONE$(tput sgr0)"
+elif [[ -e "$whichyum" ]]; then
+	OStype="yum"
+
+	echo ""
+	echo -n "Updating apt repositories..."
+
+	yum update -y &>/dev/null
+
+	echo "$(tput setaf 2)DONE$(tput sgr0)"
+	echo ""
+	echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
+
+	yum install sed sudo wget python-setuptools -y &>/dev/null
+	easy_install supervisor &>/dev/null
+
+	mkdir -p /etc/supervisor/conf.d
+	mkdir -p /var/run/supervisord
+	chmod 777 /var/run/supervisord
+
+	echo_supervisord_conf > /etc/supervisor/supervisord.conf
+
+	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord" -O "/etc/rc.d/init.d/supervisord"
+	chmod 755 /etc/rc.d/init.d/supervisord
+
+	echo "	$(tput setaf 2)DONE$(tput sgr0)"
+else
+	echo "unsupported or unknown architecture"
+	echo ""
+	exit;
+fi
 
 # detect architecture
 if [ -n "$(uname -m | grep 64)" ]; then
@@ -166,7 +207,11 @@ echo "...$(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo "Restarting supervisord..."
-sudo service supervisor restart
+if [[ -e "/etc/rc.d/init.d/supervisord" ]]; then
+	service supervisord restart
+else
+	service supervisor restart
+fi
 
 echo ""
 echo "And you should be up and running! (http://relays.syncthing.net)"
