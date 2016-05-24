@@ -133,7 +133,7 @@ elif [[ -e "$whichyum" ]]; then
 
 	echo_supervisord_conf > /etc/supervisor/supervisord.conf
 
-	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord" -O "/etc/rc.d/init.d/supervisord"
+	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
 	chmod 755 /etc/rc.d/init.d/supervisord
 
 	echo "	$(tput setaf 2)DONE$(tput sgr0)"
@@ -166,7 +166,7 @@ wget $(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO 
 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
-dtrx relaysrv-linux*
+tar xzf relaysrv-linux*
 echo "	$(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
