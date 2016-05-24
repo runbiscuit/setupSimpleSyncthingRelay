@@ -3,7 +3,7 @@
 . /etc/init.d/functions
  
 DAEMON=/usr/bin/supervisord
-PIDFILE=/var/run/supervisord.pid
+PIDFILE=/var/run/supervisord/supervisord.pid
  
 [ -x "$DAEMON" ] || exit 0
  
