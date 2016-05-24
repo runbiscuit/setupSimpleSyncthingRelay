@@ -11,10 +11,6 @@ If you have not checked out Syncthing, go [take a look](https://github.com/synct
 
 By default, this script will join the `default` pool.
 
-**NOTE: THIS SCRIPT DOES _NOT_ WORK WITH NAT VPSes (no dedicated IP), UNLESS FURTHER MODIFICATIONS ARE MADE.**
-
-**NOTE: THIS SCRIPT IS INTENDED FOR 64-BIT INSTALLATIONS OF LINUX, AND HAS BEEN TESTED ONLY ON UBUNTU 14.04 / 16.04.**
-
 ### Installation
 
 Tested on Ubuntu 16.04 LTS:
