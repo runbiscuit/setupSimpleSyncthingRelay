@@ -9,9 +9,9 @@ echo ""
 
 echo "Deleting old data and making sure no Syncthing Relay is running..."
 
-killall relaysrv > /dev/null &> /dev/null
-rm -rf relaysrv* /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv > /dev/null &> /dev/null
-deluser relaysrv > /dev/null &> /dev/null
+killall relaysrv &> /dev/null
+rm -rf relaysrv* /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv &> /dev/null
+userdel relaysrv &> /dev/null
 
 # input relay name
 
@@ -28,8 +28,11 @@ then
 fi
 
 # autodetect/input server geolocation
-
-serverIPgeolocation="$(wget ipinfo.io/city -qO -), $(wget ipinfo.io/country -qO -)"
+ipv4=$(ip addr | grep 'inet' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -o -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
+if [[ "$ipv4" = "" ]]; then
+	ipv4=$(wget -qO- ipv4.icanhazip.com)
+fi
+serverIPgeolocation="$(wget api.db-ip.com/v2/0fd6909feee235cba41528f5aac9399e2b8e92a9/$ipv4 -qO - | grep 'city' | cut -d\" -f4), $(wget ipinfo.io/country -qO -)"
 
 echo ""
 echo "Your server IP geolocation is $serverIPgeolocation"
@@ -94,49 +97,36 @@ fi
 # start setup process (fully automated and does not need human intervention anymore)
 
 # detecting apt-get/yum
-whichaptget=`which apt-get`
-whichyum=`which yum`
+whichaptget="`which apt-get`"
+whichyum="`which yum`"
 
 if [[ -e "$whichaptget" ]]; then
 	OStype="apt-get"
-
 	echo ""
 	echo -n "Updating apt repositories..."
-
 	apt-get update -y &>/dev/null
-
-	echo "$(tput setaf 2)DONE$(tput sgr0)"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	echo ""
-	echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
-
+	echo -n "Installing packages: sed, sudo, supervisor, wget if not installed yet..."
 	apt-get install sed sudo supervisor wget -y &>/dev/null
-
-	echo "	$(tput setaf 2)DONE$(tput sgr0)"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 elif [[ -e "$whichyum" ]]; then
 	OStype="yum"
-
 	echo ""
-	echo -n "Updating apt repositories..."
-
+	echo -n "Updating yum repositories..."
 	yum update -y &>/dev/null
-
-	echo "$(tput setaf 2)DONE$(tput sgr0)"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	echo ""
-	echo "Installing packages: dtrx, sed, sudo, supervisor, wget if not installed yet."
-
+	echo -n "Installing packages: sed, sudo, supervisor, wget if not installed yet..."
 	yum install sed sudo wget python-setuptools -y &>/dev/null
 	easy_install supervisor &>/dev/null
-
 	mkdir -p /etc/supervisor/conf.d
 	mkdir -p /var/run/supervisord
 	chmod 777 /var/run/supervisord
-
 	echo_supervisord_conf > /etc/supervisor/supervisord.conf
-
 	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
 	chmod 755 /etc/rc.d/init.d/supervisord
-
-	echo "	$(tput setaf 2)DONE$(tput sgr0)"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 else
 	echo "unsupported or unknown architecture"
 	echo ""
@@ -167,7 +157,7 @@ wget $(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
 tar xzf relaysrv-linux*
-echo "	$(tput setaf 2)DONE$(tput sgr0)"
+echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Moving the relaysrv daemon to /usr/local/bin..."
@@ -183,30 +173,30 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Adding a user for relaysrv, called relaysrv."
-adduser relaysrv --gecos '' --disabled-password &> /dev/null
 mkdir /etc/relaysrv
-touch /home/relaysrv/syncthingRelay.log
-chown -R relaysrv /etc/relaysrv /home/relaysrv
-echo "...$(tput setaf 2)DONE$(tput sgr0)"
+useradd -r -d /etc/relaysrv -s /bin/false relaysrv &> /dev/null
+chown -R relaysrv /etc/relaysrv
+touch /etc/relaysrv/syncthingRelay.log
 
 echo ""
 echo -n "Copying Syncthing Relay supervisord configuration to the respective folder..."
 wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/syncthingRelay.conf" -O "/etc/supervisor/conf.d/syncthingRelay.conf" && echo "  $(tput setaf 2)DONE$(tput sgr0)" || (echo "  $(tput setaf 1)FAILED$(tput sgr0)" && echo "" && echo "Exiting." && echo "" && exit 0)
 
 echo ""
-echo "Setting name of the Syncthing relay..."
+echo -n "Setting name of the Syncthing relay..."
 sed -i s/RELAYNAME/"$displayName"/ /etc/supervisor/conf.d/syncthingRelay.conf
-echo "...$(tput setaf 2)DONE$(tput sgr0)"
+echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
-echo "Setting ports for the Syncthing relay to listen on..."
+echo -n "Setting ports for the Syncthing relay to listen on..."
 sed -i s/daemonPort/"$daemonPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
 sed -i s/daemonPort/"$daemonPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
 sed -i s/statusPort/"$statusPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
-echo "...$(tput setaf 2)DONE$(tput sgr0)"
+echo " $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo "Restarting supervisord..."
+echo ""
 if [[ -e "/etc/rc.d/init.d/supervisord" ]]; then
 	service supervisord restart
 else
