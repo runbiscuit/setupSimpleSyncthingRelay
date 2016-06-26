@@ -194,8 +194,7 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Setting ports for the Syncthing relay to listen on..."
-sed -i s/daemonPort/"$daemonPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
-sed -i s/daemonPort/"$daemonPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
+sed -i s/daemonPort/"$daemonPort"/g /etc/supervisor/conf.d/syncthingRelay.conf
 sed -i s/statusPort/"$statusPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
 echo " $(tput setaf 2)DONE$(tput sgr0)"
 
