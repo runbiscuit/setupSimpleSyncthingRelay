@@ -106,7 +106,6 @@ whichaptget="$(which apt-get)" &> /dev/null
 whichyum="$(which yum)" &> /dev/null
 
 if [[ -e "$whichaptget" ]]; then
-	OStype="apt-get"
 	echo ""
 	echo -n "Updating apt repositories..."
 	apt-get update -y &>/dev/null
@@ -116,7 +115,6 @@ if [[ -e "$whichaptget" ]]; then
 	apt-get install sed sudo supervisor -y &>/dev/null
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 elif [[ -e "$whichyum" ]]; then
-	OStype="yum"
 	echo ""
 	echo -n "Updating yum repositories..."
 	yum check-update &>/dev/null
