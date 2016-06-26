@@ -102,8 +102,8 @@ fi
 # start setup process (fully automated and does not need human intervention anymore)
 
 # detecting apt-get/yum
-whichaptget="`which apt-get`" &> /dev/null
-whichyum="`which yum`" &> /dev/null
+whichaptget="$(which apt-get)" &> /dev/null
+whichyum="$(which yum)" &> /dev/null
 
 if [[ -e "$whichaptget" ]]; then
 	OStype="apt-get"
