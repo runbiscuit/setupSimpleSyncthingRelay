@@ -126,9 +126,10 @@ elif [[ -e "$whichyum" ]]; then
 	mkdir -p /etc/supervisor/conf.d
 	mkdir -p /var/run/supervisord
 	chmod 777 /var/run/supervisord
-	echo_supervisord_conf > /etc/supervisor/supervisord.conf
 	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
 	chmod 755 /etc/rc.d/init.d/supervisord
+		# echo_supervisord_conf is provided by supervisor
+		echo_supervisord_conf > /etc/supervisord.conf
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 else
 	echo "unsupported or unknown architecture"
