@@ -7,6 +7,11 @@ echo "============ [ GitHub Source: https://git.io/vr2xt ] ============="
 echo "=================================================================="
 echo ""
 
+if [[ $EUID -ne 0 ]]; then
+  echo "You must be a root user" 2>&1
+  exit 1
+fi
+
 echo "Deleting old data and making sure no Syncthing Relay is running..."
 
 killall relaysrv &> /dev/null
