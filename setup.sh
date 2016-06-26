@@ -119,7 +119,7 @@ elif [[ -e "$whichyum" ]]; then
 	OStype="yum"
 	echo ""
 	echo -n "Updating yum repositories..."
-	yum update -y &>/dev/null
+	yum check-update &>/dev/null
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	echo ""
 	echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
