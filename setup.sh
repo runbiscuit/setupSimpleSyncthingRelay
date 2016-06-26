@@ -122,8 +122,8 @@ elif [[ -e "$whichyum" ]]; then
 	yum update -y &>/dev/null
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	echo ""
-	echo -n "Installing packages: sed, sudo, supervisor, wget if not installed yet..."
-	yum install sed sudo wget python-setuptools -y &>/dev/null
+	echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
+	yum install sed sudo python-setuptools -y &>/dev/null
 	easy_install supervisor &>/dev/null
 	mkdir -p /etc/supervisor/conf.d
 	mkdir -p /var/run/supervisord
