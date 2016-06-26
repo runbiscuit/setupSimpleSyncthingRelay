@@ -112,8 +112,8 @@ if [[ -e "$whichaptget" ]]; then
 	apt-get update -y &>/dev/null
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	echo ""
-	echo -n "Installing packages: sed, sudo, supervisor, wget if not installed yet..."
-	apt-get install sed sudo supervisor wget -y &>/dev/null
+	echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
+	apt-get install sed sudo supervisor -y &>/dev/null
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 elif [[ -e "$whichyum" ]]; then
 	OStype="yum"
