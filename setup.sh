@@ -147,7 +147,7 @@ else
 	echo "Supervisor is already installed. Where should the supervisor config for relaysrv be installed?"
 	read -rp "Default - $defaultConfPath: " supConfPath
 	if [[ -z "$supConfPath" ]]; then
-		supConfPath=defaultConfPath
+		supConfPath="$defaultConfPath"
 		echo "Using default path - $supConfPath"
 	fi
 fi
