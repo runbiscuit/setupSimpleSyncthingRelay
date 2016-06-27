@@ -125,7 +125,7 @@ if ! which supervisord &> /dev/null; then
 			yum -qy install sed sudo supervisor
 		else
 			echo -n "Supervisor not found in yum repo, installing via Python easy_install"
-			yum -qy install sed sudo python-setuptools
+			yum -qy install sed sudo python-setuptools &> /dev/null
 			easy_install supervisor &>/dev/null
 			mkdir -p /var/run/supervisord
 			chmod 755 /var/run/supervisord
