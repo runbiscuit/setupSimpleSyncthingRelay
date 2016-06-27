@@ -100,41 +100,61 @@ else
 fi
 
 # start setup process (fully automated and does not need human intervention anymore)
+# Check if supervisor is installed first
+whichsup="$(which supervisorctl)" &> /dev/null
+defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
 
-# detecting apt-get/yum
-whichaptget="$(which apt-get)" &> /dev/null
-whichyum="$(which yum)" &> /dev/null
-
-if [[ -e "$whichaptget" ]]; then
-	echo ""
-	echo -n "Updating apt repositories..."
-	apt-get update -y &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	echo ""
-	echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
-	apt-get install sed sudo supervisor -y &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-elif [[ -e "$whichyum" ]]; then
-	echo ""
-	echo -n "Updating yum repositories..."
-	yum check-update &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	echo ""
-	echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
-	yum install sed sudo python-setuptools -y &>/dev/null
-	easy_install supervisor &>/dev/null
-	mkdir -p /etc/supervisor/conf.d
-	mkdir -p /var/run/supervisord
-	chmod 777 /var/run/supervisord
-	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
-	chmod 755 /etc/rc.d/init.d/supervisord
-		# echo_supervisord_conf is provided by supervisor
-		echo_supervisord_conf > /etc/supervisord.conf
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+if ! which supervisord &> /dev/null; then
+	echo "Installing supervisor"
+	# detecting apt-get/yum
+	whichaptget="$(which apt-get)" &> /dev/null
+	whichyum="$(which yum)" &> /dev/null
+	if [[ -e "$whichaptget" ]]; then
+		echo ""
+		echo -n "Updating apt repositories..."
+		apt-get update -y &>/dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo ""
+		echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
+		apt-get install sed sudo supervisor -y &>/dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	elif [[ -e "$whichyum" ]]; then
+		echo ""
+		echo -n "Updating yum repositories..."
+		yum check-update &>/dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo ""
+		echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
+		if yum search supervisor; then
+			yum -y install supervisor
+		else
+			yum install sed sudo python-setuptools -y &>/dev/null
+			easy_install supervisor &>/dev/null
+			mkdir -p /var/run/supervisord
+			chmod 755 /var/run/supervisord
+			mkdir -p /etc/supervisor/conf.d
+			# echo_supervisord_conf is provided by supervisor
+			echo_supervisord_conf > /etc/supervisord.conf
+			# Modify it to include from conf.d by default
+			sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
+			sed -i "s/\;files.*/files = conf.d\/*.conf/" /etc/supervisord.conf
+			supConfPath = defaultConfPath
+			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
+			chmod 755 /etc/rc.d/init.d/supervisord
+		fi
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	else
+		echo "unsupported or unknown architecture"
+		echo ""
+		exit;
+	fi
 else
-	echo "unsupported or unknown architecture"
-	echo ""
-	exit;
+	echo "Supervisor is already installed. Where should the supervisor config for relaysrv be installed?"
+	read -p "Default - $defaultConfPath: " supConfPath
+	if [[ -z "$supConfPath" ]]; then
+		supConfPath = defaultConfPath
+		echo "Using default path - $supConfPath"
+	fi
 fi
 
 # detect architecture
