@@ -98,6 +98,7 @@ fi
 # start setup process
 # Check if supervisor is installed first
 defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
+supConfPath="$defaultConfPath"
 
 if ! which supervisord &> /dev/null; then
 	echo "Installing supervisor"
@@ -134,7 +135,6 @@ if ! which supervisord &> /dev/null; then
 		# Modify it to include from conf.d by default
 		sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
 		sed -i "s/\;files.*/files = \/etc\/supervisor\/conf.d\/*.conf/" /etc/supervisord.conf
-		supConfPath=defaultConfPath
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	else
 		echo "unsupported or unknown architecture"
