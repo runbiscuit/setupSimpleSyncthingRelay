@@ -102,9 +102,7 @@ defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
 if ! which supervisord &> /dev/null; then
 	echo "Installing supervisor"
 	# detecting apt-get/yum
-	whichaptget="$(which apt-get &> /dev/null)"
-	whichyum="$(which yum &> /dev/null)"
-	if [[ -e "$whichaptget" ]]; then
+	if which apt-get &> /dev/null; then
 		echo ""
 		echo -n "Updating apt repositories..."
 		apt-get update -y &>/dev/null
@@ -113,7 +111,7 @@ if ! which supervisord &> /dev/null; then
 		echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
 		apt-get install sed sudo supervisor -y &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	elif [[ -e "$whichyum" ]]; then
+	elif which yum &> /dev/null; then
 		echo ""
 		echo -n "Updating yum repositories..."
 		yum check-update &>/dev/null
