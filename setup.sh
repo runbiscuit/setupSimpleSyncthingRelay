@@ -127,16 +127,16 @@ if ! which supervisord &> /dev/null; then
 			easy_install supervisor &>/dev/null
 			mkdir -p /var/run/supervisord
 			chmod 755 /var/run/supervisord
-			mkdir -p /etc/supervisor/conf.d
-			# echo_supervisord_conf is provided by supervisor
-			echo_supervisord_conf > /etc/supervisord.conf
-			# Modify it to include from conf.d by default
-			sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
-			sed -i "s/\;files.*/files = conf.d\/*.conf/" /etc/supervisord.conf
-			supConfPath=defaultConfPath
 			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
 			chmod 755 /etc/rc.d/init.d/supervisord
 		fi
+		mkdir -p /etc/supervisor/conf.d
+		# echo_supervisord_conf is provided by supervisor
+		echo_supervisord_conf > /etc/supervisord.conf
+		# Modify it to include from conf.d by default
+		sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
+		sed -i "s/\;files.*/files = \/etc\/supervisor\/conf.d\/*.conf/" /etc/supervisord.conf
+		supConfPath=defaultConfPath
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	else
 		echo "unsupported or unknown architecture"
