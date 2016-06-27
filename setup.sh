@@ -228,7 +228,8 @@ echo " $(tput setaf 2)DONE$(tput sgr0)"
 echo ""
 echo "Restarting supervisord..."
 echo ""
-if [[ -e "/etc/rc.d/init.d/supervisord" ]]; then
+# Check for both sysvinit & systemd
+if [[ -e "/etc/rc.d/init.d/supervisord" || -e "/usr/lib/systemd/system/supervisord.service"]]; then
 	service supervisord restart
 else
 	service supervisor restart
