@@ -234,8 +234,8 @@ else
 	supervisorctl update
 fi
 
-echo "Sleeping for 10 seconds to let supervisord stabilze"
-sleep 10
+echo "Sleeping for 12 seconds to let supervisord stabilze"
+sleep 12
 supervisorctl status syncthingRelay
 echo "And you should be up and running! (http://relays.syncthing.net)"
 echo "If this script worked, feel free to give my script a star!"
