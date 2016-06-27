@@ -175,7 +175,7 @@ fi
 
 echo ""
 echo "Downloading latest release of the relaysrv daemon $cpubitsname"
-cd
+cd /tmp
 wget $(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO - | grep 'browser_' | grep $cpubits | cut -d\" -f4) &>/dev/null
 
 echo ""
