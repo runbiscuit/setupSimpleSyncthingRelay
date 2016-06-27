@@ -204,7 +204,15 @@ touch /etc/relaysrv/syncthingRelay.log
 
 echo ""
 echo -n "Copying Syncthing Relay supervisord configuration to the respective folder..."
-wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/syncthingRelay.conf" -O "/etc/supervisor/conf.d/syncthingRelay.conf" && echo "  $(tput setaf 2)DONE$(tput sgr0)" || (echo "  $(tput setaf 1)FAILED$(tput sgr0)" && echo "" && echo "Exiting." && echo "" && exit 0)
+if wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/syncthingRelay.conf" -O "$supConfPath"; then
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+else
+	echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+	echo ""
+	echo "Exiting."
+	echo ""
+	exit;
+fi
 
 echo ""
 echo -n "Setting name of the Syncthing relay..."
