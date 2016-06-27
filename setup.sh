@@ -15,7 +15,7 @@ fi
 echo "Deleting old data and making sure no Syncthing Relay is running..."
 
 killall relaysrv &> /dev/null
-rm -rf relaysrv* /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv &> /dev/null
+rm -rf /tmp/relaysrv*.tar.gz /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv &> /dev/null
 userdel relaysrv &> /dev/null
 
 # input relay name
@@ -177,19 +177,17 @@ wget $(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO 
 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
-tar xzf relaysrv-linux*
+tar --strip=1 -xaf relaysrv-linux*.tar.gz '*relaysrv'
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Moving the relaysrv daemon to /usr/local/bin..."
-cd relaysrv-linux*
 mv relaysrv /usr/local/bin
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Clearing up the remains of the relaysrv daemon."
-cd
-rm -rf relaysrv-linux*
+rm -rf relaysrv-linux*.tar.gz
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
