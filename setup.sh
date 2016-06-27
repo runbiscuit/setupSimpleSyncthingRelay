@@ -99,9 +99,11 @@ fi
 # Check if supervisor is installed first
 defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
 supConfPath="$defaultConfPath"
+newInstall=false
 
 if ! which supervisord &> /dev/null; then
 	echo "Installing supervisor"
+	newInstall=true
 	# detecting apt-get/yum
 	if which apt-get &> /dev/null; then
 		echo ""
@@ -219,14 +221,22 @@ echo " $(tput setaf 2)DONE$(tput sgr0)"
 echo ""
 echo "Restarting supervisord..."
 echo ""
-# Check for both sysvinit & systemd
-if [[ -e "/etc/rc.d/init.d/supervisord" || -e "/usr/lib/systemd/system/supervisord.service" ]]; then
-	service supervisord restart
+# Restarting supervisord also kills any running processes, which is bad
+# Use supervisorctl update if supervisor was already installed
+if "$newInstall" = "true"; then
+	# Check for both sysvinit & systemd
+	if [[ -e "/etc/rc.d/init.d/supervisord" || -e "/usr/lib/systemd/system/supervisord.service" ]]; then
+		service supervisord restart
+	else
+		service supervisor restart
+	fi
 else
-	service supervisor restart
+	supervisorctl update
 fi
 
-echo ""
+echo "Sleeping for 10 seconds to let supervisord stabilze"
+sleep 10
+supervisorctl status syncthingRelay
 echo "And you should be up and running! (http://relays.syncthing.net)"
 echo "If this script worked, feel free to give my script a star!"
 echo "Exiting."
