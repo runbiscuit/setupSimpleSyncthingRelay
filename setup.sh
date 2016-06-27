@@ -120,10 +120,11 @@ if ! which supervisord &> /dev/null; then
 		yum check-update &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
-		echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
 		if yum search supervisor &> /dev/null; then
-			yum -qy install supervisor
+			echo "Installing supervisor with yum"
+			yum -qy install sed sudo supervisor
 		else
+			echo -n "Supervisor not found in yum repo, installing via Python easy_install"
 			yum -qy install sed sudo python-setuptools
 			easy_install supervisor &>/dev/null
 			mkdir -p /var/run/supervisord
