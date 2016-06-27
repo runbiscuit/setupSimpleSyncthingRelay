@@ -102,8 +102,8 @@ defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
 if ! which supervisord &> /dev/null; then
 	echo "Installing supervisor"
 	# detecting apt-get/yum
-	whichaptget="$(which apt-get)" &> /dev/null
-	whichyum="$(which yum)" &> /dev/null
+	whichaptget="$(which apt-get &> /dev/null)"
+	whichyum="$(which yum &> /dev/null)"
 	if [[ -e "$whichaptget" ]]; then
 		echo ""
 		echo -n "Updating apt repositories..."
