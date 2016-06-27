@@ -21,7 +21,7 @@ userdel relaysrv &> /dev/null
 # input relay name
 
 echo ""
-read -p "Please enter a relay name: " relayName
+read -rp "Please enter a relay name: " relayName
 
 echo "You have entered '$relayName' as a relay name."
 
@@ -33,16 +33,15 @@ then
 fi
 
 # autodetect/input server geolocation
-ipv4=$(wget -qO- ipv4.icanhazip.com)
 serverIPgeolocation="$(wget ipinfo.io/country -qO -), $(wget ipinfo.io/country -qO -)"
 
 echo ""
 echo "Your server IP geolocation is $serverIPgeolocation"
-read -p "Is this correct? [Y/n]: " serverIPverification
+read -rp "Is this correct? [Y/n]: " serverIPverification
 
 if [[ "$serverIPverification" == [Nn] ]]
 then
-	read -p "Enter correct/preferred name: " serverIPgeolocation
+	read -rp "Enter correct/preferred name: " serverIPgeolocation
 elif [[ "$serverIPverification" == [Yy] ]] || [[ -z "$serverIPverification" ]]
 then
 	echo "Nice, proceeding."
@@ -58,12 +57,12 @@ displayName="$relayName$delimiter$serverIPgeolocation"
 
 echo ""
 echo "Thus, on the Syncthing Relay page at relays.syncthing.net, it will show as:"
-echo $displayName
+echo "$displayName"
 
 # ask user whether he is behind a NAT
 
 echo ""
-read -p "Are you behind a NAT or a firewall? [N/y]: " nat
+read -rp "Are you behind a NAT or a firewall? [N/y]: " nat
 
 if [[ "$nat" == [Yy] ]]
 then
@@ -73,15 +72,15 @@ then
 	echo ""
 
 	echo "Here are your IPv4 addresses:"
-	echo $(ifconfig | awk '/inet addr/{print substr($2,6)}')
+	ip addr | grep "inet " | cut -d ' ' -f 6 | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
 	echo ""
 
-	read -p 'Enter port for daemon: ' daemonPort
+	read -rp 'Enter port for daemon: ' daemonPort
 	echo "You have entered port $daemonPort as the port for the Syncthing relay daemon to listen on."
 
 	echo ""
 
-	read -p 'Enter port for status: ' statusPort
+	read -rp 'Enter port for status: ' statusPort
 	echo "You have entered port $statusPort as the port for the Syncthing relay status to listen on."
 elif [[ "$nat" == [Nn] ]] || [[ -z "$nat" ]]
 then
@@ -96,9 +95,8 @@ else
 	exit 0;
 fi
 
-# start setup process (fully automated and does not need human intervention anymore)
+# start setup process
 # Check if supervisor is installed first
-whichsup="$(which supervisorctl)" &> /dev/null
 defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
 
 if ! which supervisord &> /dev/null; then
@@ -135,7 +133,7 @@ if ! which supervisord &> /dev/null; then
 			# Modify it to include from conf.d by default
 			sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
 			sed -i "s/\;files.*/files = conf.d\/*.conf/" /etc/supervisord.conf
-			supConfPath = defaultConfPath
+			supConfPath=defaultConfPath
 			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
 			chmod 755 /etc/rc.d/init.d/supervisord
 		fi
@@ -147,21 +145,21 @@ if ! which supervisord &> /dev/null; then
 	fi
 else
 	echo "Supervisor is already installed. Where should the supervisor config for relaysrv be installed?"
-	read -p "Default - $defaultConfPath: " supConfPath
+	read -rp "Default - $defaultConfPath: " supConfPath
 	if [[ -z "$supConfPath" ]]; then
-		supConfPath = defaultConfPath
+		supConfPath=defaultConfPath
 		echo "Using default path - $supConfPath"
 	fi
 fi
 
 # detect architecture
-if [ -n "$(uname -m | grep 64)" ]; then
+if uname -m | grep -q 64; then
 	cpubits="linux-amd64"
 	cpubitsname="for (64bit)..."
-elif [ -n "$(uname -m | grep 86)" ]; then
+elif uname -m | grep -q 86; then
 	cpubits="linux-386"
 	cpubitsname="for (32bit)..."
-elif [ -n "$(uname -m | grep armv*)" ]; then
+elif uname -m | grep -q "armv"; then
 	cpubits="linux-arm"
 	cpubitsname="for (ARM)..."
 else
@@ -172,8 +170,8 @@ fi
 
 echo ""
 echo "Downloading latest release of the relaysrv daemon $cpubitsname"
-cd /tmp
-wget $(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO - | grep 'browser_' | grep $cpubits | cut -d\" -f4) &>/dev/null
+cd /tmp || exit
+wget "$(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO - | grep 'browser_' | grep $cpubits | cut -d\" -f4)" &>/dev/null
 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
@@ -224,7 +222,7 @@ echo ""
 echo "Restarting supervisord..."
 echo ""
 # Check for both sysvinit & systemd
-if [[ -e "/etc/rc.d/init.d/supervisord" || -e "/usr/lib/systemd/system/supervisord.service"]]; then
+if [[ -e "/etc/rc.d/init.d/supervisord" || -e "/usr/lib/systemd/system/supervisord.service" ]]; then
 	service supervisord restart
 else
 	service supervisor restart
