@@ -121,7 +121,7 @@ if ! which supervisord &> /dev/null; then
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
 		echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
-		if yum -q search supervisor; then
+		if yum search supervisor &> /dev/null; then
 			yum -qy install supervisor
 		else
 			yum -qy install sed sudo python-setuptools
