@@ -33,11 +33,8 @@ then
 fi
 
 # autodetect/input server geolocation
-ipv4=$(ip addr | grep 'inet' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -o -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
-if [[ "$ipv4" = "" ]]; then
-	ipv4=$(wget -qO- ipv4.icanhazip.com)
-fi
 serverIPgeolocation="$(wget api.db-ip.com/v2/0fd6909feee235cba41528f5aac9399e2b8e92a9/$ipv4 -qO - | grep 'city' | cut -d\" -f4), $(wget ipinfo.io/country -qO -)"
+ipv4=$(wget -qO- ipv4.icanhazip.com)
 
 echo ""
 echo "Your server IP geolocation is $serverIPgeolocation"
