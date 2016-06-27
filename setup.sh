@@ -7,16 +7,21 @@ echo "============ [ GitHub Source: https://git.io/vr2xt ] ============="
 echo "=================================================================="
 echo ""
 
+if [[ $EUID -ne 0 ]]; then
+  echo "You must be a root user" 2>&1
+  exit 1
+fi
+
 echo "Deleting old data and making sure no Syncthing Relay is running..."
 
 killall relaysrv &> /dev/null
-rm -rf relaysrv* /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv &> /dev/null
+rm -rf /tmp/relaysrv*.tar.gz /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv &> /dev/null
 userdel relaysrv &> /dev/null
 
 # input relay name
 
 echo ""
-read -p "Please enter a relay name: " relayName
+read -rp "Please enter a relay name: " relayName
 
 echo "You have entered '$relayName' as a relay name."
 
@@ -28,19 +33,15 @@ then
 fi
 
 # autodetect/input server geolocation
-ipv4=$(ip addr | grep 'inet' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -o -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
-if [[ "$ipv4" = "" ]]; then
-	ipv4=$(wget -qO- ipv4.icanhazip.com)
-fi
-serverIPgeolocation="$(wget api.db-ip.com/v2/0fd6909feee235cba41528f5aac9399e2b8e92a9/$ipv4 -qO - | grep 'city' | cut -d\" -f4), $(wget ipinfo.io/country -qO -)"
+serverIPgeolocation="$(wget ipinfo.io/city -qO -), $(wget ipinfo.io/country -qO -)"
 
 echo ""
 echo "Your server IP geolocation is $serverIPgeolocation"
-read -p "Is this correct? [Y/n]: " serverIPverification
+read -rp "Is this correct? [Y/n]: " serverIPverification
 
 if [[ "$serverIPverification" == [Nn] ]]
 then
-	read -p "Enter correct/preferred name: " serverIPgeolocation
+	read -rp "Enter correct/preferred name: " serverIPgeolocation
 elif [[ "$serverIPverification" == [Yy] ]] || [[ -z "$serverIPverification" ]]
 then
 	echo "Nice, proceeding."
@@ -56,12 +57,12 @@ displayName="$relayName$delimiter$serverIPgeolocation"
 
 echo ""
 echo "Thus, on the Syncthing Relay page at relays.syncthing.net, it will show as:"
-echo $displayName
+echo "$displayName"
 
 # ask user whether he is behind a NAT
 
 echo ""
-read -p "Are you behind a NAT or a firewall? [N/y]: " nat
+read -rp "Are you behind a NAT or a firewall? [N/y]: " nat
 
 if [[ "$nat" == [Yy] ]]
 then
@@ -71,15 +72,15 @@ then
 	echo ""
 
 	echo "Here are your IPv4 addresses:"
-	echo $(ifconfig | awk '/inet addr/{print substr($2,6)}')
+	ip addr | grep "inet " | cut -d ' ' -f 6 | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
 	echo ""
 
-	read -p 'Enter port for daemon: ' daemonPort
+	read -rp 'Enter port for daemon: ' daemonPort
 	echo "You have entered port $daemonPort as the port for the Syncthing relay daemon to listen on."
 
 	echo ""
 
-	read -p 'Enter port for status: ' statusPort
+	read -rp 'Enter port for status: ' statusPort
 	echo "You have entered port $statusPort as the port for the Syncthing relay status to listen on."
 elif [[ "$nat" == [Nn] ]] || [[ -z "$nat" ]]
 then
@@ -94,53 +95,72 @@ else
 	exit 0;
 fi
 
-# start setup process (fully automated and does not need human intervention anymore)
+# start setup process
+# Check if supervisor is installed first
+defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
+supConfPath="$defaultConfPath"
+newInstall=false
 
-# detecting apt-get/yum
-whichaptget="`which apt-get`"
-whichyum="`which yum`"
-
-if [[ -e "$whichaptget" ]]; then
-	OStype="apt-get"
-	echo ""
-	echo -n "Updating apt repositories..."
-	apt-get update -y &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	echo ""
-	echo -n "Installing packages: sed, sudo, supervisor, wget if not installed yet..."
-	apt-get install sed sudo supervisor wget -y &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-elif [[ -e "$whichyum" ]]; then
-	OStype="yum"
-	echo ""
-	echo -n "Updating yum repositories..."
-	yum update -y &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	echo ""
-	echo -n "Installing packages: sed, sudo, supervisor, wget if not installed yet..."
-	yum install sed sudo wget python-setuptools -y &>/dev/null
-	easy_install supervisor &>/dev/null
-	mkdir -p /etc/supervisor/conf.d
-	mkdir -p /var/run/supervisord
-	chmod 777 /var/run/supervisord
-	echo_supervisord_conf > /etc/supervisor/supervisord.conf
-	wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
-	chmod 755 /etc/rc.d/init.d/supervisord
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+if ! which supervisord &> /dev/null; then
+	echo "Installing supervisor"
+	newInstall=true
+	# detecting apt-get/yum
+	if which apt-get &> /dev/null; then
+		echo ""
+		echo -n "Updating apt repositories..."
+		apt-get update -y &>/dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo ""
+		echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
+		apt-get install sed sudo supervisor -y &>/dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	elif which yum &> /dev/null; then
+		echo ""
+		echo -n "Updating yum repositories..."
+		yum check-update &>/dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo ""
+		if yum search supervisor &> /dev/null; then
+			echo "Installing supervisor with yum"
+			yum -qy install sed sudo supervisor
+		else
+			echo -n "Supervisor not found in yum repo, installing via Python easy_install"
+			yum -qy install sed sudo python-setuptools &> /dev/null
+			easy_install supervisor &>/dev/null
+			mkdir -p /var/run/supervisord
+			chmod 755 /var/run/supervisord
+			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
+			chmod 755 /etc/rc.d/init.d/supervisord
+		fi
+		mkdir -p /etc/supervisor/conf.d
+		# echo_supervisord_conf is provided by supervisor
+		echo_supervisord_conf > /etc/supervisord.conf
+		# Modify it to include from conf.d by default
+		sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
+		sed -i "s/\;files.*/files = \/etc\/supervisor\/conf.d\/*.conf/" /etc/supervisord.conf
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	else
+		echo "unsupported or unknown architecture"
+		echo ""
+		exit;
+	fi
 else
-	echo "unsupported or unknown architecture"
-	echo ""
-	exit;
+	echo "Supervisor is already installed. Where should the supervisor config for relaysrv be installed?"
+	read -rp "Default - $defaultConfPath: " supConfPath
+	if [[ -z "$supConfPath" ]]; then
+		supConfPath="$defaultConfPath"
+		echo "Using default path - $supConfPath"
+	fi
 fi
 
 # detect architecture
-if [ -n "$(uname -m | grep 64)" ]; then
+if uname -m | grep -q 64; then
 	cpubits="linux-amd64"
 	cpubitsname="for (64bit)..."
-elif [ -n "$(uname -m | grep 86)" ]; then
+elif uname -m | grep -q 86; then
 	cpubits="linux-386"
 	cpubitsname="for (32bit)..."
-elif [ -n "$(uname -m | grep armv*)" ]; then
+elif uname -m | grep -q "armv"; then
 	cpubits="linux-arm"
 	cpubitsname="for (ARM)..."
 else
@@ -151,59 +171,73 @@ fi
 
 echo ""
 echo "Downloading latest release of the relaysrv daemon $cpubitsname"
-cd
-wget $(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO - | grep 'browser_' | grep $cpubits | cut -d\" -f4) &>/dev/null
+cd /tmp || exit
+wget "$(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO - | grep 'browser_' | grep $cpubits | cut -d\" -f4)" &>/dev/null
 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
-tar xzf relaysrv-linux*
+tar --strip=1 -xaf relaysrv-linux*.tar.gz '*relaysrv'
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Moving the relaysrv daemon to /usr/local/bin..."
-cd relaysrv-linux*
 mv relaysrv /usr/local/bin
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Clearing up the remains of the relaysrv daemon."
-cd
-rm -rf relaysrv-linux*
+rm -rf relaysrv-linux*.tar.gz
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Adding a user for relaysrv, called relaysrv."
 mkdir /etc/relaysrv
-useradd -r -d /etc/relaysrv -s /bin/false relaysrv &> /dev/null
+useradd -r -d /etc/relaysrv -s /sbin/nologin relaysrv &> /dev/null
 chown -R relaysrv /etc/relaysrv
 touch /etc/relaysrv/syncthingRelay.log
 
 echo ""
 echo -n "Copying Syncthing Relay supervisord configuration to the respective folder..."
-wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/syncthingRelay.conf" -O "/etc/supervisor/conf.d/syncthingRelay.conf" && echo "  $(tput setaf 2)DONE$(tput sgr0)" || (echo "  $(tput setaf 1)FAILED$(tput sgr0)" && echo "" && echo "Exiting." && echo "" && exit 0)
+if wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/syncthingRelay.conf" -O "$supConfPath"; then
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+else
+	echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+	echo ""
+	echo "Exiting."
+	echo ""
+	exit;
+fi
 
 echo ""
 echo -n "Setting name of the Syncthing relay..."
-sed -i s/RELAYNAME/"$displayName"/ /etc/supervisor/conf.d/syncthingRelay.conf
+sed -i s/RELAYNAME/"$displayName"/ $supConfPath
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Setting ports for the Syncthing relay to listen on..."
-sed -i s/daemonPort/"$daemonPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
-sed -i s/daemonPort/"$daemonPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
-sed -i s/statusPort/"$statusPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
+sed -i s/daemonPort/"$daemonPort"/g $supConfPath
+sed -i s/statusPort/"$statusPort"/ $supConfPath
 echo " $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo "Restarting supervisord..."
 echo ""
-if [[ -e "/etc/rc.d/init.d/supervisord" ]]; then
-	service supervisord restart
+# Restarting supervisord also kills any running processes, which is bad
+# Use supervisorctl update if supervisor was already installed
+if "$newInstall" = "true"; then
+	# Check for both sysvinit & systemd
+	if [[ -e "/etc/rc.d/init.d/supervisord" || -e "/usr/lib/systemd/system/supervisord.service" ]]; then
+		service supervisord restart
+	else
+		service supervisor restart
+	fi
 else
-	service supervisor restart
+	supervisorctl update
 fi
 
-echo ""
+echo "Sleeping for 12 seconds to let supervisord stabilze"
+sleep 12
+supervisorctl status syncthingRelay
 echo "And you should be up and running! (http://relays.syncthing.net)"
 echo "If this script worked, feel free to give my script a star!"
 echo "Exiting."
