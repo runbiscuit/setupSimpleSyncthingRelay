@@ -33,7 +33,7 @@ then
 fi
 
 # autodetect/input server geolocation
-serverIPgeolocation="$(wget ipinfo.io/country -qO -), $(wget ipinfo.io/country -qO -)"
+serverIPgeolocation="$(wget ipinfo.io/city -qO -), $(wget ipinfo.io/country -qO -)"
 
 echo ""
 echo "Your server IP geolocation is $serverIPgeolocation"
