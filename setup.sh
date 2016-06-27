@@ -216,13 +216,13 @@ fi
 
 echo ""
 echo -n "Setting name of the Syncthing relay..."
-sed -i s/RELAYNAME/"$displayName"/ /etc/supervisor/conf.d/syncthingRelay.conf
+sed -i s/RELAYNAME/"$displayName"/ $supConfPath
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Setting ports for the Syncthing relay to listen on..."
-sed -i s/daemonPort/"$daemonPort"/g /etc/supervisor/conf.d/syncthingRelay.conf
-sed -i s/statusPort/"$statusPort"/ /etc/supervisor/conf.d/syncthingRelay.conf
+sed -i s/daemonPort/"$daemonPort"/g $supConfPath
+sed -i s/statusPort/"$statusPort"/ $supConfPath
 echo " $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
