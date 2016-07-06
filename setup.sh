@@ -176,23 +176,25 @@ wget "$(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO
 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
-tar --strip=1 -xaf relaysrv-linux*.tar.gz '*relaysrv'
+tar xzf relaysrv-linux*
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Moving the relaysrv daemon to /usr/local/bin..."
+cd relaysrv-linux*
 mv relaysrv /usr/local/bin
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Clearing up the remains of the relaysrv daemon."
+cd /tmp
 rm -rf relaysrv-linux*.tar.gz
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Adding a user for relaysrv, called relaysrv."
 mkdir /etc/relaysrv
-useradd -r -d /etc/relaysrv -s /sbin/nologin relaysrv &> /dev/null
+useradd -r -d /etc/relaysrv -s /bin/bash relaysrv &> /dev/null
 chown -R relaysrv /etc/relaysrv
 touch /etc/relaysrv/syncthingRelay.log
 
