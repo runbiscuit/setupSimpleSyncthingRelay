@@ -1,6 +1,14 @@
-#!/bin/bash
- 
-. /etc/init.d/functions
+#!/bin/sh
+#
+# /etc/rc.d/init.d/supervisord
+#
+# Supervisord startup script for a supervisor instance
+# Created by @sayem314 for CentOS
+# chkconfig: 2345 80 20
+# description: Autostarts supervisord on boot
+
+# Source function library.
+. /etc/rc.d/init.d/functions
  
 DAEMON=/usr/bin/supervisord
 PIDFILE=/var/run/supervisord/supervisord.pid
