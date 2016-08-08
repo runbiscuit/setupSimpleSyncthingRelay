@@ -8,8 +8,9 @@ echo "=================================================================="
 echo ""
 
 if [[ $EUID -ne 0 ]]; then
-  echo "You must be a root user" 2>&1
-  exit 1
+	echo ""
+	echo "You must be a root user" 2>&1
+	exit 1
 fi
 
 echo "Deleting old data and making sure no Syncthing Relay is running..."
@@ -21,7 +22,7 @@ userdel relaysrv &> /dev/null
 # input relay name
 
 echo ""
-read -rp "Please enter a relay name: " relayName
+read -rp "Please enter a relay name: " -e -i @ relayName
 
 echo "You have entered '$relayName' as a relay name."
 
@@ -37,13 +38,11 @@ serverIPgeolocation="$(wget ipinfo.io/city -qO -), $(wget ipinfo.io/country -qO 
 
 echo ""
 echo "Your server IP geolocation is $serverIPgeolocation"
-read -rp "Is this correct? [Y/n]: " serverIPverification
+read -rp "Is this correct? [Y/n]: " -e -i y serverIPverification
 
-if [[ "$serverIPverification" == [Nn] ]]
-then
+if [[ "$serverIPverification" == [Nn] ]]; then
 	read -rp "Enter correct/preferred name: " serverIPgeolocation
-elif [[ "$serverIPverification" == [Yy] ]] || [[ -z "$serverIPverification" ]]
-then
+elif [[ "$serverIPverification" == [Yy] ]] || [[ -z "$serverIPverification" ]]; then
 	echo "Nice, proceeding."
 else
 	echo "User has not entered a valid response, unable to determine if autodetected location is accurate."
@@ -62,7 +61,7 @@ echo "$displayName"
 # ask user whether he is behind a NAT
 
 echo ""
-read -rp "Are you behind a NAT or a firewall? [N/y]: " nat
+read -rp "Are you behind a NAT or a firewall? [N/y]: " -e -i n nat
 
 if [[ "$nat" == [Yy] ]]
 then
@@ -86,6 +85,7 @@ elif [[ "$nat" == [Nn] ]] || [[ -z "$nat" ]]
 then
 	echo ""
 	echo "Assuming that ports 22067 (daemon) and 22068 (status) are readily available for usage."
+	echo ""
 
 	daemonPort=22067
 	statusPort=22068
@@ -101,11 +101,41 @@ defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
 supConfPath="$defaultConfPath"
 newInstall=false
 
-if ! which supervisord &> /dev/null; then
-	echo "Installing supervisor"
+YUM_CMD=$(which yum)
+APT_GET_CMD="/usr/bin/apt-get"
+
+if [[ ! -e /usr/bin/supervisord ]]; then
+	echo -n "Supervisor not found..."
 	newInstall=true
 	# detecting apt-get/yum
-	if which apt-get &> /dev/null; then
+	if [[ ! -z $YUM_CMD ]]; then
+		echo ""
+		echo -n "Updating yum repositories..."
+		yum update -y &>/dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo ""
+		echo -n "Installing packages: sed, sudo, python-setuptools if not installed yet..."
+		yum install sed sudo python-setuptools -y &> /dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo -n "Downloading supervisor..."
+		cd /tmp
+		wget -q "https://pypi.python.org/packages/80/37/964c0d53cbd328796b1aeb7abea4c0f7b0e8c7197ea9b0b9967b7d004def/supervisor-3.3.1.tar.gz"
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		#Extracting...
+		tar -xzf supervisor-3.3.1.tar.gz
+		echo -n "Building supervisor..."
+		cd supervisor-3.3.1
+		python setup.py install &> /dev/null
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		#Deleteing supervisor unneccessary files
+		cd /tmp
+		rm supervisor*
+		wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord"
+		chmod +x /etc/rc.d/init.d/supervisord
+		echo_supervisord_conf > /etc/supervisord.conf
+		chkconfig --add supervisord
+		chkconfig supervisord on
+	elif [[ ! -z $APT_GET_CMD ]]; then
 		echo ""
 		echo -n "Updating apt repositories..."
 		apt-get update -y &>/dev/null
@@ -114,43 +144,21 @@ if ! which supervisord &> /dev/null; then
 		echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
 		apt-get install sed sudo supervisor -y &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	elif which yum &> /dev/null; then
-		echo ""
-		echo -n "Updating yum repositories..."
-		yum check-update &>/dev/null
-		echo "  $(tput setaf 2)DONE$(tput sgr0)"
-		echo ""
-		if yum search supervisor &> /dev/null; then
-			echo "Installing supervisor with yum"
-			yum -qy install sed sudo supervisor
-		else
-			echo -n "Supervisor not found in yum repo, installing via Python easy_install"
-			yum -qy install sed sudo python-setuptools &> /dev/null
-			easy_install supervisor &>/dev/null
-			mkdir -p /var/run/supervisord
-			chmod 755 /var/run/supervisord
-			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord" &>/dev/null
-			chmod 755 /etc/rc.d/init.d/supervisord
-		fi
-		mkdir -p /etc/supervisor/conf.d
-		# echo_supervisord_conf is provided by supervisor
 		echo_supervisord_conf > /etc/supervisord.conf
-		# Modify it to include from conf.d by default
-		sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
-		sed -i "s/\;files.*/files = \/etc\/supervisor\/conf.d\/*.conf/" /etc/supervisord.conf
-		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	else
+		echo ""
 		echo "unsupported or unknown architecture"
 		echo ""
 		exit;
 	fi
-else
-	echo "Supervisor is already installed. Where should the supervisor config for relaysrv be installed?"
-	read -rp "Default - $defaultConfPath: " supConfPath
-	if [[ -z "$supConfPath" ]]; then
-		supConfPath="$defaultConfPath"
-		echo "Using default path - $supConfPath"
-	fi
+		mkdir -p /var/run/supervisord/
+		mkdir -p /etc/supervisor/conf.d
+		# Modify it to include from conf.d by default
+		sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
+		sed -i "s/\;files.*/files = \/etc\/supervisor\/conf.d\/*.conf/" /etc/supervisord.conf
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		sleep 2
+		service supervisord start
 fi
 
 # detect architecture
@@ -170,9 +178,10 @@ else
 fi
 
 echo ""
-echo "Downloading latest release of the relaysrv daemon $cpubitsname"
+echo -n "Downloading latest release of the relaysrv daemon $cpubitsname"
 cd /tmp || exit
 wget "$(wget https://api.github.com/repos/syncthing/relaysrv/releases/latest -qO - | grep 'browser_' | grep $cpubits | cut -d\" -f4)" &>/dev/null
+echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
@@ -186,7 +195,7 @@ mv relaysrv /usr/local/bin
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
-echo -n "Clearing up the remains of the relaysrv daemon."
+echo -n "Clearing up the remains of the relaysrv daemon..."
 cd /tmp
 rm -rf relaysrv-linux*.tar.gz
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
@@ -237,8 +246,16 @@ else
 	supervisorctl update
 fi
 
-echo "Sleeping for 12 seconds to let supervisord stabilize"
-sleep 12
+#Let the supervisord stabilize
+echo "We would wait few seconds to let supervisord stabilize..."
+secs=$((3 * 4))
+while [ $secs -gt 0 ]; do
+   echo -ne "  $secs\033[0K\r"
+   sleep 1
+   : $((secs--))
+done
+
+echo ""
 supervisorctl status syncthingRelay
 echo "And you should be up and running! (http://relays.syncthing.net)"
 echo "If this script worked, feel free to give my script a star!"
