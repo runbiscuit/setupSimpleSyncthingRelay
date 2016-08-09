@@ -22,7 +22,7 @@ start() {
                 echo supervisord already running: $PID
                 exit 2;
         else
-                daemon  $DAEMON --pidfile=$PIDFILE -c /etc/supervisor/supervisord.conf
+                daemon  $DAEMON --pidfile=$PIDFILE -c /etc/supervisord.conf
                 RETVAL=$?
                 echo
                 [ $RETVAL -eq 0 ] && touch /var/lock/subsys/supervisord
