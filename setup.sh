@@ -105,13 +105,12 @@ YUM_CMD=$(which yum)
 APT_GET_CMD="/usr/bin/apt-get"
 
 if [[ ! -e /usr/bin/supervisord ]]; then
-	echo -n "Supervisor not found..."
 	newInstall=true
 	# detecting apt-get/yum
 	if [[ ! -z $YUM_CMD ]]; then
 		echo ""
 		echo -n "Updating yum repositories..."
-		yum update -y &>/dev/null
+		yum update-minimal --security -y &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
 		echo -n "Installing packages: sed, sudo, python-setuptools if not installed yet..."
@@ -129,12 +128,20 @@ if [[ ! -e /usr/bin/supervisord ]]; then
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		#Deleteing supervisor unneccessary files
 		cd /tmp
-		rm supervisor*
-		wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord"
-		chmod +x /etc/rc.d/init.d/supervisord
-		echo_supervisord_conf > /etc/supervisord.conf
-		chkconfig --add supervisord
-		chkconfig supervisord on
+		rm -rf supervisor*
+		#Setup startup
+		init=`cat /proc/1/comm`
+		if [[ "$init" == 'systemd' ]]; then
+			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/etc/supervisord.service" -O "/etc/systemd/system/"
+			systemctl enable supervisord
+			echo_supervisord_conf > /etc/supervisord.conf
+		else
+			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/etc/supervisord-yum.sh" -O "/etc/rc.d/init.d/supervisord"
+			chmod +x /etc/rc.d/init.d/supervisord
+			echo_supervisord_conf > /etc/supervisord.conf
+			chkconfig --add supervisord
+			chkconfig supervisord on
+		fi
 	elif [[ ! -z $APT_GET_CMD ]]; then
 		echo ""
 		echo -n "Updating apt repositories..."
