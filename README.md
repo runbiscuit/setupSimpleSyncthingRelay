@@ -13,11 +13,11 @@ By default, this script will join the `default` pool.
 
 ### Installation
 
-Tested on Ubuntu 16.04 LTS and CentOS 6.8
+Tested on Ubuntu 16.04 LTS, CentOS 6.8 and 7.2
 
 Run below command on your ssh terminal and you're good to go :)
 ```
-wget https://git.io/syncrelay -O - -o /dev/null|bash
+wget https://git.io/syncrelay && bash syncrelay
 ```
 
 ### Questions & Answers (Q&As)
