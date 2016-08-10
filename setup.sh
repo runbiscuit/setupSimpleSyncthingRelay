@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# https://github.com/theroyalstudent/setupSimpleSyncthingRelay
+#
+
+clear
 
 echo ""
 echo "=================================================================="
@@ -20,7 +25,6 @@ rm -rf /tmp/relaysrv*.tar.gz /etc/relaysrv /home/relaysrv /usr/local/bin/relaysr
 userdel relaysrv &> /dev/null
 
 # input relay name
-
 echo ""
 read -rp "Please enter a relay name: " -e -i @ relayName
 
@@ -28,8 +32,7 @@ echo "You have entered '$relayName' as a relay name."
 
 delimiter=' - '
 
-if [ -z "$relayName" ]
-then
+if [ -z "$relayName" ]; then
 	delimiter=''
 fi
 
@@ -51,27 +54,31 @@ else
 fi
 
 # inform user on relay name
-
 displayName="$relayName$delimiter$serverIPgeolocation"
 
 echo ""
 echo "Thus, on the Syncthing Relay page at relays.syncthing.net, it will show as:"
-echo "$displayName"
+echo "$(tput setaf 2)$displayName$(tput sgr0)"
 
-# ask user whether he is behind a NAT
+# detect if user is behind a NAT
+internalIP=$(ip addr | grep 'inet' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -o -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
+externalIP=$(wget -qO- ipv4.icanhazip.com)
 
-echo ""
-read -rp "Are you behind a NAT or a firewall? [N/y]: " -e -i n nat
+if [[ $internalIP == "$externalIP" ]]; then
+	nat="no"
+else
+	nat="yes"
+fi
 
-if [[ "$nat" == [Yy] ]]
-then
+if [[ "$nat" == "yes" ]]; then
 	echo ""
 	echo "On commercial NAT VPS services like LowEndSpirit, the last octet of your local network would usually determine the ports open to you."
+	echo ""
 	echo "If the last octet of your IP is xxx, then expect ports from xxx01 to xxx20 to be open to you."
 	echo ""
 
 	echo "Here are your IPv4 addresses:"
-	ip addr | grep "inet " | cut -d ' ' -f 6 | grep -oE '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
+	echo "$externalIP"
 	echo ""
 
 	read -rp 'Enter port for daemon: ' daemonPort
@@ -81,11 +88,12 @@ then
 
 	read -rp 'Enter port for status: ' statusPort
 	echo "You have entered port $statusPort as the port for the Syncthing relay status to listen on."
-elif [[ "$nat" == [Nn] ]] || [[ -z "$nat" ]]
-then
+	echo ""
+elif [[ "$nat" == "no" ]] || [[ -z "$nat" ]]; then
 	echo ""
 	echo "Assuming that ports 22067 (daemon) and 22068 (status) are readily available for usage."
 	echo ""
+	sleep 1
 
 	daemonPort=22067
 	statusPort=22068
@@ -101,21 +109,20 @@ defaultConfPath="/etc/supervisor/conf.d/syncthingRelay.conf"
 supConfPath="$defaultConfPath"
 newInstall=false
 
-YUM_CMD=$(which yum)
-APT_GET_CMD="/usr/bin/apt-get"
-
 if [[ ! -e /usr/bin/supervisord ]]; then
 	newInstall=true
+	YUM_CMD=$(which yum)
+	APT_GET_CMD="/usr/bin/apt-get"
 	# detecting apt-get/yum
 	if [[ ! -z $YUM_CMD ]]; then
-		echo ""
 		echo -n "Updating yum repositories..."
 		yum update-minimal --security -y &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
-		echo -n "Installing packages: sed, sudo, python-setuptools if not installed yet..."
+		echo -n "Installing sed, sudo and python-setuptools..."
 		yum install sed sudo python-setuptools -y &> /dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+
 		echo -n "Downloading supervisor..."
 		cd /tmp
 		wget -q "https://pypi.python.org/packages/80/37/964c0d53cbd328796b1aeb7abea4c0f7b0e8c7197ea9b0b9967b7d004def/supervisor-3.3.1.tar.gz"
@@ -126,13 +133,14 @@ if [[ ! -e /usr/bin/supervisord ]]; then
 		cd supervisor-3.3.1
 		python setup.py install &> /dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
-		#Deleteing supervisor unneccessary files
+		# deleteing supervisor unneccessary files
 		cd /tmp
 		rm -rf supervisor*
+
 		#Setup startup
 		init=`cat /proc/1/comm`
 		if [[ "$init" == 'systemd' ]]; then
-			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/etc/supervisord.service" -O "/etc/systemd/system/"
+			wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/etc/supervisord.service" -O "/etc/systemd/system/supervisord.service"
 			systemctl enable supervisord
 			echo_supervisord_conf > /etc/supervisord.conf
 		else
@@ -143,7 +151,6 @@ if [[ ! -e /usr/bin/supervisord ]]; then
 			chkconfig supervisord on
 		fi
 	elif [[ ! -z $APT_GET_CMD ]]; then
-		echo ""
 		echo -n "Updating apt repositories..."
 		apt-get update -y &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
@@ -163,7 +170,6 @@ if [[ ! -e /usr/bin/supervisord ]]; then
 		# Modify it to include from conf.d by default
 		sed -i "s/\;\[include\]/[include]/" /etc/supervisord.conf
 		sed -i "s/\;files.*/files = \/etc\/supervisor\/conf.d\/*.conf/" /etc/supervisord.conf
-		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		sleep 2
 		service supervisord start
 fi
@@ -207,6 +213,7 @@ cd /tmp
 rm -rf relaysrv-linux*.tar.gz
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
+# add user for relayserv
 echo ""
 echo -n "Adding a user for relaysrv, called relaysrv."
 mkdir /etc/relaysrv
@@ -214,6 +221,7 @@ useradd -r -d /etc/relaysrv -s /bin/bash relaysrv &> /dev/null
 chown -R relaysrv /etc/relaysrv
 touch /etc/relaysrv/syncthingRelay.log
 
+# download relay config
 echo ""
 echo -n "Copying Syncthing Relay supervisord configuration to the respective folder..."
 if wget -q "https://raw.githubusercontent.com/theroyalstudent/setupSimpleSyncthingRelay/master/syncthingRelay.conf" -O "$supConfPath"; then
@@ -244,7 +252,7 @@ echo ""
 # Use supervisorctl update if supervisor was already installed
 if "$newInstall" = "true"; then
 	# Check for both sysvinit & systemd
-	if [[ -e "/etc/rc.d/init.d/supervisord" || -e "/usr/lib/systemd/system/supervisord.service" ]]; then
+	if [[ -e "/etc/rc.d/init.d/supervisord" || -e "/etc/systemd/system/supervisord.service" || -e "/usr/lib/systemd/system/supervisord.service" ]]; then
 		service supervisord restart
 	else
 		service supervisor restart
@@ -257,13 +265,14 @@ fi
 echo "We would wait few seconds to let supervisord stabilize..."
 secs=$((3 * 4))
 while [ $secs -gt 0 ]; do
-   echo -ne "  $secs\033[0K\r"
+   echo -ne "$secs\033[0K\r"
    sleep 1
    : $((secs--))
 done
 
 echo ""
 supervisorctl status syncthingRelay
+echo ""
 echo "And you should be up and running! (http://relays.syncthing.net)"
 echo "If this script worked, feel free to give my script a star!"
 echo "Exiting."
