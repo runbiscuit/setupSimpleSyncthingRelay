@@ -13,7 +13,12 @@ By default, this script will join the `default` pool.
 
 ### Installation
 
-Tested on Ubuntu 16.04 LTS, CentOS 6.8 and 7.2
+Tested on:
+
+- Ubuntu 14.04 LTS
+- Ubuntu 16.04 LTS
+- CentOS 6.8
+- CentOS 7.2
 
 Run below command on your ssh terminal and you're good to go :)
 ```
@@ -62,7 +67,7 @@ Yes! Contributions are always welcome - if you have any code to contribute, simp
 
 Copyright (C) 2016 [Edwin A.](https://theroyalstudent.com) <edwin@theroyalstudent.com>.
 
-Credits to @sayem314 for CentOS/yum compatibility and other hotfixes.
+Credits to @sayem314 for CentOS/yum compatibility and many other hotfixes.
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
 
