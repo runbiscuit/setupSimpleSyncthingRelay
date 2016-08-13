@@ -198,7 +198,7 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
-tar xzf relaysrv-linux*
+tar xzf relaysrv-linux*.tar.gz
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
