@@ -245,8 +245,15 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Setting ports for the Syncthing relay to listen on..."
-sed -i s/daemonPort/"$daemonPort"/g $supConfPath
-sed -i s/statusPort/"$statusPort"/ $supConfPath
+
+if [[ "$nat" == "yes" ]]; then
+	sed -i s/\:daemonPort/"$externalIP:$daemonPort"/g $supConfPath
+	sed -i s/\:statusPort/"$externalIP:$statusPort"/ $supConfPath
+else
+	sed -i s/daemonPort/"$daemonPort"/g $supConfPath
+	sed -i s/statusPort/"$statusPort"/ $supConfPath
+fi
+
 echo " $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
