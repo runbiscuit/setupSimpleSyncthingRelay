@@ -21,7 +21,7 @@ fi
 echo "Deleting old data and making sure no Syncthing Relay is running..."
 
 killall relaysrv &> /dev/null
-rm -rf /tmp/relaysrv*.tar.gz /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv &> /dev/null
+rm -rf /tmp/relaysrv*.tar.gz /etc/relaysrv /home/relaysrv /usr/local/bin/relaysrv /etc/supervisor/conf.d/syncthingRelay.conf &> /dev/null
 userdel relaysrv &> /dev/null
 
 # input relay name
