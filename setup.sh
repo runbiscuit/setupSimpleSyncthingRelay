@@ -93,6 +93,8 @@ if [[ "$nat" == "yes" ]]; then
 	read -rp 'Enter port for status: ' statusPort
 	echo "You have entered port $statusPort as the port for the Syncthing relay status to listen on."
 	echo ""
+
+	extDaemonPort="$externalIP:$daemonPort"
 elif [[ "$nat" == "no" ]] || [[ -z "$nat" ]]; then
 	echo ""
 	echo "Assuming that ports 22067 (daemon) and 22068 (status) are readily available for usage."
@@ -100,7 +102,7 @@ elif [[ "$nat" == "no" ]] || [[ -z "$nat" ]]; then
 	sleep 1
 
 	daemonPort=22067
-	extDaemonPort="$externalIP:$daemonPort"
+	extDaemonPort=":$daemonPort"
 	statusPort=22068
 else
 	echo "User has not entered a valid response, unable to determine the ports to listen on."
@@ -247,8 +249,8 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 echo ""
 echo -n "Setting ports for the Syncthing relay to listen on..."
 
-sed -i s/daemonPort/"$daemonPort"/g $supConfPath
-sed -i s/\:extDaemonPort/"$extDaemonPort"/g $supConfPath
+sed -i s/daemonPort/"$daemonPort"/ $supConfPath
+sed -i s/\:extDaemonPort/"$extDaemonPort"/ $supConfPath
 sed -i s/statusPort/"$statusPort"/ $supConfPath
 
 echo " $(tput setaf 2)DONE$(tput sgr0)"
