@@ -100,6 +100,7 @@ elif [[ "$nat" == "no" ]] || [[ -z "$nat" ]]; then
 	sleep 1
 
 	daemonPort=22067
+	extDaemonPort="$externalIP:$daemonPort"
 	statusPort=22068
 else
 	echo "User has not entered a valid response, unable to determine the ports to listen on."
@@ -246,13 +247,8 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 echo ""
 echo -n "Setting ports for the Syncthing relay to listen on..."
 
-if [[ "$nat" == "yes" ]]; then
-	sed -i s/\:daemonPort/"$externalIP:$daemonPort"/g $supConfPath
-	sed -i s/\:statusPort/"$externalIP:$statusPort"/ $supConfPath
-else
-	sed -i s/daemonPort/"$daemonPort"/g $supConfPath
-	sed -i s/statusPort/"$statusPort"/ $supConfPath
-fi
+sed -i s/statusPort/"$statusPort"/ $supConfPath
+sed -i s/\:daemonPort/"$extDaemonPort"/g $supConfPath
 
 echo " $(tput setaf 2)DONE$(tput sgr0)"
 
