@@ -101,7 +101,7 @@ elif [[ "$nat" == "no" ]] || [[ -z "$nat" ]]; then
 	echo ""
 	sleep 1
 
-	daemonPort=":22067"
+	daemonPort=22067
 	extDaemonPort="$externalIP:$daemonPort"
 	statusPort=22068
 else
