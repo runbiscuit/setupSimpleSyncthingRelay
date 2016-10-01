@@ -198,19 +198,19 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Extracting the relaysrv daemon..."
-tar xzf relaysrv-linux*.tar.gz
+tar xzf strelaysrv-linux*.tar.gz
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Moving the relaysrv daemon to /usr/local/bin..."
-cd relaysrv-linux*
+cd strelaysrv-linux*
 mv strelaysrv /usr/local/bin/relaysrv
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
 echo -n "Clearing up the remains of the relaysrv daemon..."
 cd /tmp
-rm -rf relaysrv-linux*.tar.gz
+rm -rf strelaysrv-linux*.tar.gz
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 # add user for relayserv
