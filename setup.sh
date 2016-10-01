@@ -126,8 +126,8 @@ if [[ ! -e /usr/bin/supervisord ]]; then
 		yum update-minimal --security -y &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
-		echo -n "Installing sed, sudo and python-setuptools..."
-		yum install sed sudo python-setuptools -y &> /dev/null
+		echo -n "Installing sed, sudo and python-setuptools as well as vnstat..."
+		yum install sed sudo python-setuptools vnstat yum install vixie-cron -y &> /dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 		echo -n "Downloading supervisor..."
@@ -162,8 +162,8 @@ if [[ ! -e /usr/bin/supervisord ]]; then
 		apt-get update -y &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
-		echo -n "Installing packages: sed, sudo, supervisor if not installed yet..."
-		apt-get install sed sudo supervisor -y &>/dev/null
+		echo -n "Installing packages: sed, sudo, vnstat, crontab and supervisor if not installed yet..."
+		apt-get install sed sudo supervisor vnstat crontab -y &>/dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo_supervisord_conf > /etc/supervisord.conf
 	else
@@ -212,6 +212,8 @@ echo ""
 echo -n "Moving the relaysrv daemon to /usr/local/bin..."
 cd strelaysrv-linux*
 mv strelaysrv /usr/local/bin/relaysrv
+cp usr/bin/bandwidth_check /usr/bin/bandwidth_check
+chmod 700 /usr/bin/bandwidth_check
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
@@ -282,6 +284,13 @@ done
 
 echo ""
 supervisorctl status syncthingRelay
+echo ""
+
+line1='1 * * * * /usr/bin/bandwidth_check'
+line2='0 0 1 * * /usr/bin/bandwidth_check -r'
+
+(crontab -u root -l; echo "$line1"; echo "$line2" ) | crontab -u root -
+
 echo ""
 echo "And you should be up and running! (http://relays.syncthing.net)"
 echo "If this script worked, feel free to give my script a star!"
