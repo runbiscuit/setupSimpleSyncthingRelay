@@ -204,7 +204,7 @@ echo "  $(tput setaf 2)DONE$(tput sgr0)"
 echo ""
 echo -n "Moving the relaysrv daemon to /usr/local/bin..."
 cd relaysrv-linux*
-mv relaysrv /usr/local/bin
+mv strelaysrv /usr/local/bin/relaysrv
 echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 echo ""
