@@ -250,7 +250,7 @@ echo ""
 echo -n "Setting ports for the Syncthing relay to listen on..."
 
 sed -i s/daemonPort/"$daemonPort"/ $supConfPath
-sed -i s/\:extDaemonPort/"$extDaemonPort"/ $supConfPath
+sed -i s/extDaemonPort/"$extDaemonPort"/ $supConfPath
 sed -i s/statusPort/"$statusPort"/ $supConfPath
 
 echo " $(tput setaf 2)DONE$(tput sgr0)"
