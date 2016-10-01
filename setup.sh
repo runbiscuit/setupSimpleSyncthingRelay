@@ -127,7 +127,7 @@ if [[ ! -e /usr/bin/supervisord ]]; then
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
 		echo -n "Installing sed, sudo and python-setuptools as well as vnstat..."
-		yum install sed sudo python-setuptools vnstat yum install vixie-cron -y &> /dev/null
+		yum install sed sudo python-setuptools vnstat yum install vixie-cron cronie -y &> /dev/null
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 		echo -n "Downloading supervisor..."

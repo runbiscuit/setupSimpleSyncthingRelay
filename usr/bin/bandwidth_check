@@ -49,7 +49,7 @@ if (($bandwidthlimit < $bwtotal)); then
 echo "Bandwidth limit reached."
 echo "Shutting down the Syncthing relay."
 
-pkill -9 relaysrv
+supervisorctl stop syncthingRelay
 
 else
 
