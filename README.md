@@ -22,7 +22,7 @@ Tested on:
 
 Run below command on your ssh terminal and you're good to go :)
 ```
-wget https://git.io/syncrelay && bash syncrelay
+wget https://git.io/syncrelay -O syncrelay && bash syncrelay && rm -rf syncrelay
 ```
 
 ### Questions & Answers (Q&As)
