@@ -184,13 +184,13 @@ fi
 # detect architecture
 if uname -m | grep -q 64; then
 	cpubits="linux-amd64"
-	cpubitsname="for (64bit)..."
+	cpubitsname="for your 64-bit Linux system..."
 elif uname -m | grep -q 86; then
 	cpubits="linux-386"
-	cpubitsname="for (32bit)..."
+	cpubitsname="for 32-bit Linux system..."
 elif uname -m | grep -q "armv"; then
 	cpubits="linux-arm"
-	cpubitsname="for (ARM)..."
+	cpubitsname="for ARM Linux system..."
 else
 	echo "unsupported or unknown architecture"
 	echo ""
