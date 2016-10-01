@@ -282,9 +282,10 @@ while [ $secs -gt 0 ]; do
    : $((secs--))
 done
 
-echo ""
-supervisorctl status syncthingRelay
-echo ""
+echo "Last thing: Please enter a bandwidth limit in GiB."
+read bwlimit
+
+echo "bandwidthlimit=$bwlimit" > /etc/syncthing_bw.conf
 
 line1='1 * * * * /usr/bin/bandwidth_check'
 line2='0 0 1 * * /usr/bin/bandwidth_check -r'
@@ -292,6 +293,9 @@ line2='0 0 1 * * /usr/bin/bandwidth_check -r'
 (crontab -u root -l; echo "$line1"; echo "$line2" ) | crontab -u root -
 
 echo ""
+supervisorctl status syncthingRelay
+echo ""
+
 echo "And you should be up and running! (http://relays.syncthing.net)"
 echo "If this script worked, feel free to give my script a star!"
 echo "Exiting."

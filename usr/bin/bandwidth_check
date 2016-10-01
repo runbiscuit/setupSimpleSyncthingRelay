@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Configured bandwidth limit below in GiB:
-bandwidthlimit=500
+# Add bandwidth
+
+source /etc/syncthing_bw.conf
+
 # Do not change anything else unless you know what you are doing.
 
 if [ "$1" == "-r" ]; then
