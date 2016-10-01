@@ -77,8 +77,12 @@ if [[ "$nat" == "yes" ]]; then
 	echo "If the last octet of your IP is xxx, then expect ports from xxx01 to xxx20 to be open to you."
 	echo ""
 
-	echo "Here are your IPv4 addresses:"
+	echo "Here is your external IPv4 address:"
 	echo "$externalIP"
+	echo ""
+
+	echo "Here is your internal IPv4 address:"
+	echo "$internalIP"
 	echo ""
 
 	read -rp 'Enter port for daemon: ' daemonPort
